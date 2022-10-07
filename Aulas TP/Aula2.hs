@@ -34,3 +34,13 @@ insert e (i:f)
 isort :: Ord a=> [a] -> [a]
 isort [] = []
 isort (i:f) = insert i (isort f)
+
+-- 2.6 
+--sum [x^2 | x<-[1..100]]
+
+-- 2.8
+myzip :: [Float] -> [Float] -> [Float]
+myzip [] [] = []
+myzip (i1:f1) (i2:f2) = [i1*i2] ++ myzip f1 f2
+dotprod :: [Float] -> [Float] -> Float
+dotprod l1 l2 = sum (myzip l1 l2)

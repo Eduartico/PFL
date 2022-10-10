@@ -44,3 +44,11 @@ myzip [] [] = []
 myzip (i1:f1) (i2:f2) = [i1*i2] ++ myzip f1 f2
 dotprod :: [Float] -> [Float] -> Float
 dotprod l1 l2 = sum (myzip l1 l2)
+
+--2.9
+divprod :: Integer -> [Integer]
+divprod x = [y | y<-[1..(x-1)], mod x y==0]
+
+--2.10
+perfeitos :: Integer -> [Integer]
+perfeitos x = [y | y<-[1..(x-1)], sum (divprod y) == y]

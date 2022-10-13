@@ -1,4 +1,4 @@
-data M = M {num :: Float | vars :: [String] | exps :: [Int]}
+data M = M {num :: Float , vars :: [String] , exps :: [Int]}
 
 norm :: [M] -> [M]
 norm [] = []
@@ -13,13 +13,16 @@ Nova add (norm xs)
 sumM :: [M] -> M
 
 
-sortP :: [M] -> [M]
+--sortP :: [M] -> [M]
 
 
-multiM :: [M] -> [M]
+--multiM :: [M] -> [M]
 
 
-derivate :: [M] -> [M]
+--derivate :: [M] -> [M]
+
+sumM [] = M{num = 0, vars = ["0"], exps = [0]}
+sumM (i:f) = M {num = num i + num (sumM f),vars = vars i,exps = exps i}
 
 
 {-

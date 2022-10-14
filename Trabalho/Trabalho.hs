@@ -11,17 +11,21 @@ Nova add (norm xs)
 -}
 
 --import Data.List groupby e sortby
+--o bloco acima é um groupby (se funcionar)
+--sortby precisa de uma função de seleção, kinda like função match ali embaixo but not really
 
 sumM :: [M] -> M
-sumM [] = M{num = 0, vars = ['0'], exps = [0]}
+sumM [] = M{num = 0, vars = [], exps = []}
 sumM (i:f) = M {num = num i + num (sumM f),vars = vars i,exps = exps i}
 
 --sortP :: [M] -> [M]
 
 
-multiM :: [M] -> [M]
-multiM [] = M{num = 0, vars = ['0'], exps = [0]}
-multiM (i:f) = M {num = num i * num (sumM f),vars = vars i . vars (multiM f),exps = exps i . exps (multiM f)}
+multiM :: [M] -> M
+multiM [] = M{num = 1, vars = [], exps = []}
+multiM (i:f) = M {num = num i * num (multiM f),vars = vars i ++ vars (multiM f),exps = exps i ++ exps (multiM f)}
+-- ^ works but need to apply norm after, example problem: (multiM [M 1.0 ['x'] [2], M 2.0 ['x'] [2]]) -> M {num = 2.0, vars = "xx", exps = [2,2]} 
+
 
 --derivate :: [M] -> [M]
 

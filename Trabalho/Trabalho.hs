@@ -1,4 +1,6 @@
-data M = M {num :: Float , vars :: [Char] , exps :: [Int]} deriving (Eq, Show)
+import Data.List
+
+data M = M {num :: Float , vars :: [Char] , exps :: [Int]} deriving (Eq, Show, Ord)
 
 norm :: [M] -> [M]
 norm [] = []
@@ -10,7 +12,6 @@ xs = filter (lista antiga, (x.vars != i.vars && x.exps != i.exps))
 Nova add (norm xs)
 -}
 
---import Data.List groupby e sortby
 --o bloco acima é um groupby (se funcionar)
 --sortby precisa de uma função de seleção, kinda like função match ali embaixo but not really
 
@@ -28,6 +29,19 @@ multiM (i:f) = M {num = num i * num (multiM f),vars = vars i ++ vars (multiM f),
 
 
 --derivate :: [M] -> [M]
+
+sortP ::  [M] -> [M]
+sortP [] = []
+sortP p [M] = sortby compareM p
+
+compareM :: [Ord a] => [M] -> [M] -> Ordering
+compareM [M1] [M2]
+        |maximum exps M1 < maximum exps M2 = GT
+        |maximum exps M1 == maximum exps M2 && length vars M1 < length vars M2 = GT
+        |maximum exps M1 == maximum exps M2 && length vars M1 == length vars M2 = EQ
+        |maximum exps M1 == maximum exps M2 && length vars M1 > length vars M2 = LT
+        |maximum exps M1 > maximum exps M2 = LT
+
 
 
 

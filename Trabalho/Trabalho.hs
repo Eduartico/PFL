@@ -28,14 +28,14 @@ multiM (i:f) = M {num = num i * num (multiM f),vars = vars i ++ vars (multiM f),
 
 --derivate :: [M] -> [M]
 
-sortP ::  [M] -> [M]
+sortP :: [M] -> [M]
 sortP [] = []
-sortP p [M] = sortby compareM p
+sortP p = sortBy compareM p
 
-compareM :: (Eq a, Ord a) => M -> M -> Ordering
+compareM :: M -> M -> Ordering
 compareM m1 m2
-        |length exps m1 < 1 = GT
-        |length exps m2 < 1 = LT
-        |maximum exps m1 < maximum exps m2 = GT
-        |maximum exps m1 == maximum exps m2 = compareM M {num = num m1, vars = vars m1, exps = [y | y <- exps m1, y != maximum vars m1]} M {num = num m2, vars = vars m2, exps = [y | y <- exps m2, y != maximum vars m2]}
-        |maximum exps m1 > maximum exps m2 = LT
+        |length (exps m1) < 1 = GT
+        |length (exps m2) < 1 = LT
+        |maximum (exps m1) < maximum (exps m2) = GT
+        |maximum (exps m1) == maximum (exps m2) = compareM M {num = num m1, vars = vars m1, exps = [y | y <- exps m1, y /= maximum (exps m1)]} M {num = num m2, vars = vars m2, exps = [y | y <- exps m2, y /= maximum (exps m2)]}
+        |maximum (exps m1) > maximum (exps m2) = LT

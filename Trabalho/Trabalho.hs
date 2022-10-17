@@ -1,6 +1,6 @@
 import Data.List
 
-data M = M {num :: Float , vars :: [Char] , exps :: [Int]} deriving (Eq, Show, Ord)
+data M = M {num :: Float , vars :: [String] , exps :: [Int]} deriving (Eq, Show, Ord)
 
 norm :: [M] -> [M]
 norm [] = []

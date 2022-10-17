@@ -19,10 +19,8 @@ sumM :: [M] -> M
 sumM [] = M{num = 0, vars = [], exps = []}
 sumM (i:f) = M {num = num i + num (sumM f),vars = vars i,exps = exps i}
 
---sortP :: [M] -> [M]
 
-
-multiM :: [M] -> M
+multiM :: [M] -> M -- transformar para receber 2M 
 multiM [] = M{num = 1, vars = [], exps = []}
 multiM (i:f) = M {num = num i * num (multiM f),vars = vars i ++ vars (multiM f),exps = exps i ++ exps (multiM f)}
 -- ^ works but need to apply norm after, example problem: (multiM [M 1.0 ['x'] [2], M 2.0 ['x'] [2]]) -> M {num = 2.0, vars = "xx", exps = [2,2]} 
@@ -34,21 +32,10 @@ sortP ::  [M] -> [M]
 sortP [] = []
 sortP p [M] = sortby compareM p
 
-compareM :: [Ord a] => [M] -> [M] -> Ordering
-compareM [M1] [M2]
-        |maximum exps M1 < maximum exps M2 = GT
-        |maximum exps M1 == maximum exps M2 && length vars M1 < length vars M2 = GT
-        |maximum exps M1 == maximum exps M2 && length vars M1 == length vars M2 = EQ
-        |maximum exps M1 == maximum exps M2 && length vars M1 > length vars M2 = LT
-        |maximum exps M1 > maximum exps M2 = LT
-
-
-
-
-{-
-matchM :: [M] -> Bool
-matchM P [] = False
-matchM P [x:xs]
-    | (x.vars == y.vars && x.exps == y.exps) = True
-    | Otherwise = False
--}
+compareM :: (Eq a, Ord a) => M -> M -> Ordering
+compareM m1 m2
+        |length exps m1 < 1 = GT
+        |length exps m2 < 1 = LT
+        |maximum exps m1 < maximum exps m2 = GT
+        |maximum exps m1 == maximum exps m2 = compareM M {num = num m1, vars = vars m1, exps = [y | y <- exps m1, y != maximum vars m1]} M {num = num m2, vars = vars m2, exps = [y | y <- exps m2, y != maximum vars m2]}
+        |maximum exps m1 > maximum exps m2 = LT

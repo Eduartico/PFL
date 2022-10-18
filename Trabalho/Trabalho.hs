@@ -2,8 +2,9 @@ import Data.List
 import System.IO
 
 data M = M {num :: Float , vars :: [(String , Int)]} deriving (Eq, Show, Ord)
+data M = P [M] deriving (Eq, Show, Ord)
 
-norm :: [M] -> [M]
+norm :: P -> P
 norm [] = []
 {-
 norm [] = []
@@ -16,23 +17,27 @@ Nova add (norm xs)
 --o bloco acima é um groupby (se funcionar)
 --sortby precisa de uma função de seleção, kinda like função match ali embaixo but not really
 
-sumM :: [M] -> M
+sumM :: P -> M
 sumM [] = M{num = 0, vars = []}
 sumM (i:f) = M {num = num i + num (sumM f),vars = vars i}
 
 
-multiM :: [M] -> M -- transformar para receber 2M 
-multiM [] = M{num = 1, vars = []}
+multiM :: M -> M -> M
+multiM [] [] = M{num = 1, vars = []}
 multiM (i:f) = M {num = num i * num (multiM f),vars = vars i ++ vars (multiM f)}
 -- ^ works but need to apply norm after, example problem: (multiM [M 1.0 ['x'] [2], M 2.0 ['x'] [2]]) -> M {num = 2.0, vars = "xx", exps = [2,2]} 
 
-derivateM :: M -> String -> M
-derivateM m v
-        |not (or (map(== v)(fst(unzip(vars m))))) = M{num = 0, vars = []}
-        |snd ([y | y<-vars m, fst y == v] !! 0) == 1 = M{num = num m, vars = filter(\x -> fst x /= v)(vars m)}
-        |otherwise = M {num = num m * (fromIntegral (snd ([y | y<-vars m, fst y == v] !! 0)) :: Float), vars = map(\x -> if fst x /= v then x else (fst x, snd x - 1))(vars m)}
+multiP :: P -> P -> P
+multiM [] = M{num = 1, vars = []}
+multiM (i1:f1) (i2:f2)
+        | M {num = num i * num (multiM f),vars = vars i ++ vars (multiM f)}
+-- ^ works but need to apply norm after, example problem: (multiM [M 1.0 ['x'] [2], M 2.0 ['x'] [2]]) -> M {num = 2.0, vars = "xx", exps = [2,2]}
 
-sortP :: [M] -> [M]
+dupM :: P -> M -> P -- checks if the vars in M are in P, if so it multiples the stuff correctly, if not just add them
+dupM [] m = P{m}
+dupM p [] = p
+dumM (i:f) m
+        | fst (vars i) == fst (vars m) = M{ num i * num m, []} -- ta errado mas tenho que treinar, falta iterar sobre os vars de i e de m, isquici hehe
 sortP [] = []
 sortP p = sortBy compareM p
 

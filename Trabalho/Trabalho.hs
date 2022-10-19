@@ -33,11 +33,17 @@ multiM (i1:f1) (i2:f2)
         | M {num = num i * num (multiM f),vars = vars i ++ vars (multiM f)}
 -- ^ works but need to apply norm after, example problem: (multiM [M 1.0 ['x'] [2], M 2.0 ['x'] [2]]) -> M {num = 2.0, vars = "xx", exps = [2,2]}
 
-dupM :: P -> M -> P -- checks if the vars in M are in P, if so it multiples the stuff correctly, if not just add them
-dupM [] m = P{m}
-dupM p [] = p
-dumM (i:f) m
-        | fst (vars i) == fst (vars m) = M{ num i * num m, []} -- ta errado mas tenho que treinar, falta iterar sobre os vars de i e de m, isquici hehe
+dupM :: M -> M -> M -- checks if the vars in M are in P, if so it multiples the stuff correctly, if not just add them
+dumM m1 m2
+        | fst (vars m1) !!0 == fst (vars m2) !00 = M{ num m1 * num m2, ((fst (vars m1) !!0), snd (vars m1) !!0 + snd (vars m2)) ++  vars (dupM ())} -- se encontrar uma variavel igual, vai multiplicar 
+
+derivateM :: M -> String -> M
+derivateM m v
+        |not (or (map(== v)(fst(unzip(vars m))))) = M{num = 0, vars = []}
+        |snd ([y | y<-vars m, fst y == v] !! 0) == 1 = M{num = num m, vars = filter(\x -> fst x /= v)(vars m)}
+        |otherwise = M {num = num m * (fromIntegral (snd ([y | y<-vars m, fst y == v] !! 0)) :: Float), vars = map(\x -> if fst x /= v then x else (fst x, snd x - 1))(vars m)}
+
+sortP :: [M] -> [M]
 sortP [] = []
 sortP p = sortBy compareM p
 

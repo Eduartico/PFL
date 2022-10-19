@@ -2,11 +2,10 @@ import Data.List
 import System.IO
 
 data M = M {num :: Float , vars :: [(String , Int)]} deriving (Eq, Show, Ord)
-data M = P [M] deriving (Eq, Show, Ord)
+data P = P {mons :: [M]} deriving (Eq, Show, Ord)
 
-norm :: P -> P
+{-norm :: P -> P
 norm [] = []
-{-
 norm [] = []
 norm Antiga [x:xs]
 Nova insert (sumM (filter (\i xs, (x.vars == i.vars && x.exps == i.exps))))
@@ -17,26 +16,30 @@ Nova add (norm xs)
 --o bloco acima é um groupby (se funcionar)
 --sortby precisa de uma função de seleção, kinda like função match ali embaixo but not really
 
-sumM :: P -> M
+sumM :: [M] -> M
 sumM [] = M{num = 0, vars = []}
 sumM (i:f) = M {num = num i + num (sumM f),vars = vars i}
 
-
 multiM :: M -> M -> M
-multiM [] [] = M{num = 1, vars = []}
-multiM (i:f) = M {num = num i * num (multiM f),vars = vars i ++ vars (multiM f)}
--- ^ works but need to apply norm after, example problem: (multiM [M 1.0 ['x'] [2], M 2.0 ['x'] [2]]) -> M {num = 2.0, vars = "xx", exps = [2,2]} 
+multiM m1 m2 = M{num = num m1 * num m2, vars = normVars (vars m1 ++ vars m2)}
 
+normVars :: [(String, Int)] -> [(String, Int)]
+normVars [] = []
+normVars (x:xs)
+        |elem (fst x) (fst(unzip(xs))) = map(\y -> if fst y == fst x then (fst y, snd y + snd x) else y) xs
+        |otherwise = x : xs
+{-}
 multiP :: P -> P -> P
 multiM [] = M{num = 1, vars = []}
 multiM (i1:f1) (i2:f2)
         | M {num = num i * num (multiM f),vars = vars i ++ vars (multiM f)}
+-}
 -- ^ works but need to apply norm after, example problem: (multiM [M 1.0 ['x'] [2], M 2.0 ['x'] [2]]) -> M {num = 2.0, vars = "xx", exps = [2,2]}
-
+{-}
 dupM :: M -> M -> M -- checks if the vars in M are in P, if so it multiples the stuff correctly, if not just add them
 dumM m1 m2
         | fst (vars m1) !!0 == fst (vars m2) !00 = M{ num m1 * num m2, ((fst (vars m1) !!0), snd (vars m1) !!0 + snd (vars m2)) ++  vars (dupM ())} -- se encontrar uma variavel igual, vai multiplicar 
-
+-}
 derivateM :: M -> String -> M
 derivateM m v
         |not (or (map(== v)(fst(unzip(vars m))))) = M{num = 0, vars = []}

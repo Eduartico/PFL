@@ -3,13 +3,42 @@
 {-# HLINT ignore "Use map" #-}
 {-# HLINT ignore "Avoid lambda" #-}
 {-# HLINT ignore "Use newtype instead of data" #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 import Data.List
 import System.IO
+import Data.Char
 
 data M = M {num :: Float , vars :: [(String , Int)]} deriving (Eq, Show, Ord)
 data P = P {mons :: [M]} deriving (Eq, Show, Ord)
 
---Normalização
+--Manipulação de String
+
+stringToP :: String -> P
+stringToP s = P{mons = parseStoM(words s)}
+
+parseStoM :: [String] -> [M]
+parseStoM [] = []
+parseStoM (s:f) = (M {num = parseNum (grpDigs s), vars =  parseVars (grpDigs s)}) : parseStoM f
+
+grpDigs :: String -> [String]
+grpDigs = groupBy(\c1 c2 -> (isDigit c1 || c1 == '.') == (isDigit c2 || c2 == '.'))
+
+scnd :: [a] -> a
+scnd xs = head(tail xs)
+
+parseNum :: [String] -> Float
+parseNum s
+        |head (head s) == '-' = (-1.0) * if length(head s)  == 1 then (read(scnd s) :: Float) else 1
+        |head (head s) == '+' = if length(head s)  == 1 then (read(scnd s) :: Float) else 1
+        |isDigit(head (head s)) = read(head s) :: Float
+        |otherwise = 1
+
+parseVars :: [String] -> [(String, Int)]
+parseVars [] = []
+parseVars (x:xs)
+        |x == "-" || x == "+" || isDigit(head x) = parseVars xs
+        |elem '^' x = (filter(`notElem` "+-^*")x, read(head xs)::Int) : parseVars(tail xs)
+        |otherwise = (filter(`notElem` "+-^*")x,1) : parseVars(xs)
 
 pToString :: P -> String
 pToString (P []) = ""
@@ -17,6 +46,8 @@ pToString (P (i:f)) = mToString i ++ concatMap (\m -> (if num m > 0 then " +" el
 
 mToString :: M -> String
 mToString m = show(num m) ++ concatMap(\t -> "*" ++ fst t ++ "^" ++ show(snd t))(vars m)
+
+--Normalização
 
 norm :: P -> P
 norm p = P{mons = sortP(sumM(map(\x -> M{num = num x, vars = sort (vars x)})(mons p)))}

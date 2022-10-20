@@ -54,7 +54,7 @@ mToString m
 --Normalização
 
 norm :: P -> P
-norm p = P{mons = sortP(sumM(map(\x -> M{num = num x, vars = sort (vars x)})(mons p)))}
+norm p = P{mons = sortP(filter (\m -> num m/=0) (sumM(map(\x -> M{num = num x, vars = sort (vars x)})(mons p))))}
 
 normalize :: P -> String
 normalize p = pToString(norm p)
@@ -63,6 +63,12 @@ normalizeS :: String -> String
 normalizeS s = normalize(stringToP s)
 
 --Somas
+
+somaS :: String -> String -> String
+somaS s1 s2 = soma (stringToP s1) (stringToP s2)
+
+soma :: P -> P -> String
+soma p1 p2 = normalize P{mons = mons p1 ++ mons p2}
 
 sumP :: P -> P -> P
 sumP p1 p2 = norm P{mons = mons p1 ++ mons p2}
@@ -80,7 +86,7 @@ multiply :: P -> P -> String
 multiply p1 p2 = pToString(multiP p1 p2)
 
 multiP :: P-> P-> P
-multiP p1 p2 = norm(P{mons = foldl(\x y -> x ++ multiM (mons p2) y)[](mons p1)})
+multiP p1 p2 = norm(P{mons = foldl(\x y -> x ++ multiM (mons (norm p2)) y)[](mons (norm p1))})
 
 multiM :: [M] -> M -> [M]
 multiM ms m = map(\x -> M{num = num x * num m, vars = normVars (vars x ++ vars m)})ms

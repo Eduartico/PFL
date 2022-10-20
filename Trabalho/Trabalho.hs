@@ -99,7 +99,7 @@ multiM ms m = map(\x -> M{num = num x * num m, vars = normVars (vars x ++ vars m
 --Derivação
 
 derivateP :: P -> String -> P
-derivateP p v = P{mons = filter(\m -> not(null (vars m)))(map(`derivateM` v)(mons p))}
+derivateP p v = P{mons = sortP (filter(\m -> not(null (vars m)))(map(`derivateM` v)(mons (norm p))))}
 
 derivateM :: M -> String -> M
 derivateM m v

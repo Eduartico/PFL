@@ -18,10 +18,12 @@ stringToP s = P{mons = parseStoM(words s)}
 
 parseStoM :: [String] -> [M]
 parseStoM [] = []
-parseStoM (s:f) = (M {num = parseNum (grpDigs s), vars =  parseVars (grpDigs s)}) : parseStoM f
+parseStoM (s:f)
+        |s == "+" || s == "-" = parseStoM((s ++ head f): tail f)
+        |otherwise = (M {num = parseNum (grpDigs s), vars =  parseVars (grpDigs s)}) : parseStoM f
 
 grpDigs :: String -> [String]
-grpDigs = groupBy(\c1 c2 -> (isDigit c1 || c1 == '.') == (isDigit c2 || c2 == '.'))
+grpDigs = groupBy(\c1 c2 -> (isDigit c1 || c1 == '.') == (isDigit c2 || c2 == '.') && (c1 == '*') == (c2 == '*'))
 
 scnd :: [a] -> a
 scnd xs = head(tail xs)
@@ -36,7 +38,7 @@ parseNum s
 parseVars :: [String] -> [(String, Int)]
 parseVars [] = []
 parseVars (x:xs)
-        |x == "-" || x == "+" || isDigit(head x) = parseVars xs
+        |x == "-" || x == "+" || isDigit(head x) || x == "*" = parseVars xs
         |elem '^' x = (filter(`notElem` "+-^*")x, read(head xs)::Int) : parseVars(tail xs)
         |otherwise = (filter(`notElem` "+-^*")x,1) : parseVars(xs)
 
@@ -45,7 +47,9 @@ pToString (P []) = ""
 pToString (P (i:f)) = mToString i ++ concatMap (\m -> (if num m > 0 then " +" else " ") ++ mToString m)f
 
 mToString :: M -> String
-mToString m = show(num m) ++ concatMap(\t -> "*" ++ fst t ++ "^" ++ show(snd t))(vars m)
+mToString m
+        |num m /= 1 = show(num m) ++ concatMap(\t -> "*" ++ fst t ++ (if snd t /= 1 then "^" ++ show(snd t) else ""))(vars m)
+        |otherwise = tail (concatMap(\t -> "*" ++ fst t ++ (if snd t /= 1 then "^" ++ show(snd t) else ""))(vars m))
 
 --Normalização
 
@@ -54,6 +58,10 @@ norm p = P{mons = sortP(sumM(map(\x -> M{num = num x, vars = sort (vars x)})(mon
 
 normalize :: P -> String
 normalize p = pToString(norm p)
+
+normalizeS :: String -> String
+normalizeS s = normalize(stringToP s)
+
 --Somas
 
 sumP :: P -> P -> P
@@ -65,6 +73,9 @@ sumM (m:ms) = foldl(\x y -> M{num = num x + num y, vars = vars x}) m (filter(\x-
 
 --Multiplicação
 
+multiplyS :: String -> String -> String
+multiplyS s1 s2 = multiply (stringToP s1) (stringToP s2)
+
 multiply :: P -> P -> String
 multiply p1 p2 = pToString(multiP p1 p2)
 
@@ -73,7 +84,6 @@ multiP p1 p2 = norm(P{mons = foldl(\x y -> x ++ multiM (mons p2) y)[](mons p1)})
 
 multiM :: [M] -> M -> [M]
 multiM ms m = map(\x -> M{num = num x * num m, vars = normVars (vars x ++ vars m)})ms
---multiM (i:f) m = M{num = num i * num m, vars = normVars (vars i ++ vars m)} : f
 
 normVars :: [(String, Int)] -> [(String, Int)]
 normVars [] = []

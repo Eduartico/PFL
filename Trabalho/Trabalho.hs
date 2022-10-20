@@ -48,19 +48,24 @@ pToString (P (i:f)) = mToString i ++ concatMap (\m -> (if num m > 0 then " +" el
 
 mToString :: M -> String
 mToString m
+        |num m == (-1) = "-" ++ mToString(M{num = 1, vars = vars m})
         |num m /= 1 = show(num m) ++ concatMap(\t -> "*" ++ fst t ++ (if snd t /= 1 then "^" ++ show(snd t) else ""))(vars m)
         |otherwise = tail (concatMap(\t -> "*" ++ fst t ++ (if snd t /= 1 then "^" ++ show(snd t) else ""))(vars m))
 
 --Normalização
 
 norm :: P -> P
-norm p = P{mons = sortP(filter (\m -> num m/=0) (sumM(map(\x -> M{num = num x, vars = sort (vars x)})(mons p))))}
+norm p = P{mons = sortP(filter (\m -> num m/=0) (sumM(map(\x -> M{num = num x, vars = sort(normVars(vars x))})(mons p))))}
 
 normalize :: P -> String
 normalize p = pToString(norm p)
 
 normalizeS :: String -> String
 normalizeS s = normalize(stringToP s)
+
+normVars :: [(String, Int)] -> [(String, Int)]
+normVars [] = []
+normVars (x:xs) = foldl(\y z -> (fst y, snd y + snd z)) x (filter(\y-> fst y == fst x) xs) : normVars (filter(\y-> fst y /= fst x)xs)
 
 --Somas
 
@@ -91,12 +96,6 @@ multiP p1 p2 = norm(P{mons = foldl(\x y -> x ++ multiM (mons (norm p2)) y)[](mon
 multiM :: [M] -> M -> [M]
 multiM ms m = map(\x -> M{num = num x * num m, vars = normVars (vars x ++ vars m)})ms
 
-normVars :: [(String, Int)] -> [(String, Int)]
-normVars [] = []
-normVars (x:xs)
-        |elem (fst x) (fst(unzip xs)) = map(\y -> if fst y == fst x then (fst y, snd y + snd x) else y) xs
-        |otherwise = x : xs
-
 --Derivação
 
 derivateP :: P -> String -> P
@@ -114,11 +113,10 @@ sortP :: [M] -> [M]
 sortP [] = []
 sortP p = sortBy compareM p
 
-maximumExp :: M -> (String, Int)
-maximumExp m = if null (vars m) then ("",0) else maximumBy (\x y -> if snd x < snd y then LT else GT) (vars m)
-
 compareM :: M -> M -> Ordering
 compareM m1 m2
-        |null (vars m1) && null (vars m2) = LT
-        |snd (maximumExp m1) /= snd (maximumExp m2) = if snd (maximumExp m1) > snd (maximumExp m2) then LT else GT
-        |otherwise = compareM M {num = num m1, vars = filter(\x -> x/= maximumExp m1)(vars m1)} M {num = num m2, vars = filter(\x -> x/= maximumExp m2)(vars m2)}
+        |null (vars m2) = LT
+        |null (vars m1) = GT 
+        |fst (head (vars m1)) /= fst (head (vars m2)) = if fst (head (vars m1)) < fst (head (vars m2)) then LT else GT
+        |snd (head (vars m1)) /= snd (head (vars m2)) = if snd (head (vars m1)) > snd (head (vars m2)) then LT else GT
+        |otherwise = compareM M {num = num m1, vars = tail(vars m1)} M {num = num m2, vars = tail(vars m2)}

@@ -141,7 +141,7 @@ main = do
                "                                                   \n " ++
                "---------------------------------------------------\n " ++
                " Welcome to Polimath! Here are the valid formats:  \n " ++
-               " P: P [M float, [(String, Int)]                    \n " ++
+               " P: (P [M float [(String, Int)]])                  \n " ++
                " String: 2x^5 + 3y^3 + 4x^2*y^4                    \n " ++
                "                                                   \n " ++
                " Our functions include:                            \n " ++
@@ -156,5 +156,3 @@ main = do
                "                                                   \n " ++
                " * derivateP - Derivate polinoum as P              \n " ++
                " * derivateS  - Derivate polinoum as String        \n ")
-
--- main

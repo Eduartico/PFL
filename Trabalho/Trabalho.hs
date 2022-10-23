@@ -130,8 +130,10 @@ compareM m1 m2
 
 -- Menu
 
-menu :: IO()
-menu = putStr ("     ____  ____  __    ______  ______  ________  __ \n " ++
+main :: IO()
+main = do
+        putStr ("                                                   \n " ++
+               "    ____  ____  __    ______  ______  ________  __ \n " ++
                "   / __ \\/ __ \\/ /   /  _/  |/  /   |/_  __/ / / / \n " ++
                "  / /_/ / / / / /    / // /|_/ / /| | / / / /_/ /  \n " ++
                " / ____/ /_/ / /____/ // /  / / ___ |/ / / __  /   \n " ++
@@ -153,7 +155,6 @@ menu = putStr ("     ____  ____  __    ______  ______  ________  __ \n " ++
                " * multiplyS Str Str - Multiply polinoums as String\n " ++
                "                                                   \n " ++
                " * derivateP - Derivate polinoum as P              \n " ++
-               " * derivateS  - Derivate polinoum as String        \n " ++
-               "                                                   \n " ++
-               "                                                   \n " )
+               " * derivateS  - Derivate polinoum as String        \n ")
 
+-- main

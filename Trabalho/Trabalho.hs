@@ -57,11 +57,11 @@ mToString m
 norm :: P -> P
 norm p = P{mons = sortP(filter (\m -> num m/=0) (sumM(map(\x -> M{num = num x, vars = sort(normVars(vars x))})(mons p))))}
 
-normalize :: P -> String
-normalize p = pToString(norm p)
+normalizeP :: P -> String
+normalizeP p = pToString(norm p)
 
 normalizeS :: String -> String
-normalizeS s = normalize(stringToP s)
+normalizeS s = normalizeP(stringToP s)
 
 normVars :: [(String, Int)] -> [(String, Int)]
 normVars [] = []
@@ -69,11 +69,11 @@ normVars (x:xs) = foldl(\y z -> (fst y, snd y + snd z)) x (filter(\y-> fst y == 
 
 --Somas
 
-somaS :: String -> String -> String
-somaS s1 s2 = soma (stringToP s1) (stringToP s2)
+sumS :: String -> String -> String
+sumS s1 s2 = soma (stringToP s1) (stringToP s2)
 
 soma :: P -> P -> String
-soma p1 p2 = normalize P{mons = mons p1 ++ mons p2}
+soma p1 p2 = normalizeP P{mons = mons p1 ++ mons p2}
 
 sumP :: P -> P -> P
 sumP p1 p2 = norm P{mons = mons p1 ++ mons p2}
@@ -85,10 +85,10 @@ sumM (m:ms) = foldl(\x y -> M{num = num x + num y, vars = vars x}) m (filter(\x-
 --Multiplicação
 
 multiplyS :: String -> String -> String
-multiplyS s1 s2 = multiply (stringToP s1) (stringToP s2)
+multiplyS s1 s2 = multiplyP (stringToP s1) (stringToP s2)
 
-multiply :: P -> P -> String
-multiply p1 p2 = pToString(multiP p1 p2)
+multiplyP :: P -> P -> String
+multiplyP p1 p2 = pToString(multiP p1 p2)
 
 multiP :: P-> P-> P
 multiP p1 p2 = norm(P{mons = foldl(\x y -> x ++ multiM (mons (norm p2)) y)[](mons (norm p1))})
@@ -98,8 +98,15 @@ multiM ms m = map(\x -> M{num = num x * num m, vars = normVars (vars x ++ vars m
 
 --Derivação
 
-derivateP :: P -> String -> P
-derivateP p v = P{mons = sortP (filter(\m -> not(null (vars m)))(map(`derivateM` v)(mons (norm p))))}
+derivate :: P -> String -> P
+derivate p v = P{mons = sortP (filter(\m -> not(null (vars m)))(map(`derivateM` v)(mons (norm p))))}
+
+derivateP :: P -> String -> String
+derivateP p v = pToString(derivate p v)
+
+
+derivateS :: String -> String -> P
+derivateS p v =  derivate (stringToP p) v
 
 derivateM :: M -> String -> M
 derivateM m v
@@ -120,3 +127,32 @@ compareM m1 m2
         |fst (head (vars m1)) /= fst (head (vars m2)) = if fst (head (vars m1)) < fst (head (vars m2)) then LT else GT
         |snd (head (vars m1)) /= snd (head (vars m2)) = if snd (head (vars m1)) > snd (head (vars m2)) then LT else GT
         |otherwise = compareM M {num = num m1, vars = tail(vars m1)} M {num = num m2, vars = tail(vars m2)}
+
+-- Menu
+
+main :: IO()
+main = do
+        putStr ("                                                   \n " ++
+               "    ____  ____  __    ______  ______  ________  __ \n " ++
+               "   / __ \\/ __ \\/ /   /  _/  |/  /   |/_  __/ / / / \n " ++
+               "  / /_/ / / / / /    / // /|_/ / /| | / / / /_/ /  \n " ++
+               " / ____/ /_/ / /____/ // /  / / ___ |/ / / __  /   \n " ++
+               "/_/    \\____/_____/___/_/  /_/_/  |_/_/ /_/ /_/    \n " ++
+               "                                                   \n " ++
+               "---------------------------------------------------\n " ++
+               " Welcome to Polimath! Here are the valid formats:  \n " ++
+               " P: (P [M float [(String, Int)]])                  \n " ++
+               " String: 2x^5 + 3y^3 + 4x^2*y^4                    \n " ++
+               "                                                   \n " ++
+               " Our functions include:                            \n " ++
+               " * normalizeP P  - Normalize polinoum  as P         \n " ++
+               " * normalizeS Str  - Normalize polinoum as String  \n " ++
+               "                                                   \n " ++
+               " * sumP P P  - Sum polinoums as P                  \n " ++
+               " * sumS Str Str  - Sum polinoums as String         \n " ++
+               "                                                   \n " ++
+               " * multiplyP P P  - Multiply polinoums as P         \n " ++
+               " * multiplyS Str Str - Multiply polinoums as String\n " ++
+               "                                                   \n " ++
+               " * derivateP - Derivate polinoum as P              \n " ++
+               " * derivateS  - Derivate polinoum as String        \n ")

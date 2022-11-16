@@ -10,7 +10,7 @@ N1 is N-1,
 somaRec(N1, F1), 
 F is F1 + N.
 
-fibonacci(0, ). 
+fibonacci(0, 0). 
 fibonacci(1, 1).                   
 fibonacci(N, F):- N > 0,
 N1 is N-1, N2 is N-2,

@@ -1,5 +1,5 @@
 :- use_module(library(lists)).
-
+:-dynamic board/1, color/1.
 startGame:- 
     writeLine('Select Game Mode:'), writeLine('1: Player vs Player'), writeLine('2: Player vs PC'), writeLine('3: PC vs PC'),
     read(GameMode),
@@ -38,10 +38,10 @@ repeatNl(N):- N>0 ,nl, S is N-1, repeatNl(S).
 
 gameSetup:-
     Line = ['W','W','W','W','W'],
-    Board1 = [Line, Line, Line, Line, Line],
+    board = [Line, Line, Line, Line, Line],
     nb_setval(board, Board1),
     printBoard(board),
-    Color = 'B'.
+    color = 'B'.
 loopRefresh:-
     (Color =:= 'B' -> Color = 'R';
     Color = 'B'),

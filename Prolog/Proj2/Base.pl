@@ -1,6 +1,9 @@
 :- use_module(library(lists)).
 :- use_module(library(random)).
+:- use_module(library(system)).
 :- dynamic board/1, color/1, difficulty/1.
+
+% Main ---------------------------------------------
 play:- 
     writeLine('Select Game Mode:'), writeLine('1: Player vs Player'), writeLine('2: Player vs PC'), writeLine('3: PC vs PC'),
     read(GameMode),
@@ -10,7 +13,7 @@ play:-
     GameMode =:= 3 -> startAVA;
     clearScreen, writeLine('Invalid Input!'), play).
 
-% Player vs PC ---------------------------------------------
+% Player vs AI ---------------------------------------------
 startPVA:-
     writeLine('Select Difficulty:'), nl, writeq('Easy or Hard'), nl,
     read(Difdummy),
@@ -19,12 +22,13 @@ startPVA:-
     writeLine('Invalid Input!'), startPVA),
     writeLine('The game is about to start!'), nl,
     gameSetup,
-    gameLoopPVA.
+    (gameLoopPVA-> true;
+    printWin, play).
 
 gameLoopPVA:-
     (checkWin -> fail;
-    playerInput, clearScreen, printBoard, changeColor, 
-    aiMove, clearScreen, printBoard, writeLine('Your opponent made a move!'), Sleep(2), /*Check Win*/ changeColor, gameLoopPVA
+    playerInput, clearScreen, printBoard, sleep(1.5), changeColor, 
+    aiMove, /*Check Win*/ changeColor, gameLoopPVA
     ).
     
 % Player vs Player ---------------------------------------------
@@ -32,46 +36,29 @@ gameLoopPVA:-
 startPVP:-
     writeLine('The game is about to start!'), nl,
     gameSetup,
-    gameLoopPVP.
+    (gameLoopPVP-> true;
+    printWin, play).
 
 gameLoopPVP:-
     (checkWin -> fail;
-    playerInput, clearScreen, printBoard, changeColor, gameLoopPVP
+    playerInput, clearScreen, printBoard, sleep(1.5), changeColor, gameLoopPVP
     ).
 
 
-% PC vs PC ---------------------------------------------
+% AI vs AI ---------------------------------------------
 
+startAVA:-
+    writeLine('The game is about to start!'), nl,
+    gameSetup,
+    (gameLoopAVA-> true;
+    printWin, play).
 
+gameLoopAVA:-
+    (checkWin -> fail;
+    aiMove, changeColor, changeDifficulty, gameLoopAVA
+    ).
 
-
-
-
-
-
-
-
-
-
-
-% Support functions ---------------------------------------------
-
-changeColor:-
-    color(Color),
-    (Color =:= 1 -> set_color(2); set_color(1)).
-
-printBoard:- board(Board), maplist(writeBoardLine, Board).
-
-writeBoardLine(L):- maplist(writeBoardChar, L), nl.
-
-writeBoardChar(C):- (C =:= 0 -> writeq('W'); C =:= 1 -> writeq('B'); writeq('R')).
-
-writeLine(L):- writeq(L), nl.
-
-clearScreen:- repeatNl(1).
-
-repeatNl(0).
-repeatNl(N):- N>0 ,nl, S is N-1, repeatNl(S).
+% Swaps and sets ------------------------------------------------------------------------------------------
 
 set_board(Value):-
     retractall(board(_)), asserta(board(Value)).
@@ -82,24 +69,24 @@ set_color(Value):-
 set_difficulty(Value):-
     retractall(difficulty(_)), asserta(difficulty(Value)).
 
+changeColor:-
+    color(Color),
+    (Color =:= 1 -> set_color(2); set_color(1)).
+
+changeDifficulty:-
+    difficulty(Difficulty),
+    (Difficulty =:= 1 -> set_difficulty(2); set_difficulty(1)).
+
+
+% Game logic ------------------------------------------------------------------------------------------
+
 gameSetup:-
     Line = [0, 0, 0, 0, 0],
     Board = [Line, Line, Line, Line, Line],
     set_board(Board),
     printBoard,
+    set_difficulty(1),
     set_color(1).
-loopRefresh:-
-    (color =:= 'B' -> color = 'R';
-    color = 'B'),
-    B is 0, R is 0,
-    %%checkWin,
-    CT = 1, RT = 1.
-
-playerInput:-
-    writeLine('Please input your next tile'), 
-    getCoord(MoveRow, 'Row:'),
-    getCoord(MoveCol, 'Column:'),
-    makeMove(MoveRow, MoveCol).
 
 getCoord(Coord, Message):- writeLine(Message), read(Coord1), 
     ((integer(Coord1), Coord1 > 0 , Coord1 < 6) -> Coord = Coord1; 
@@ -194,20 +181,90 @@ tryRow([H|T], I, J):-
     tryRow(T, I, J + 1).
 
 aiMove:-
+writeLine('Your opponent made a move!'),
 difficulty(Difficulty),
 (Difficulty =:= 1 -> easyAiMove;
 hardAiMove).
-% Easy --------------
+
 easyAiMove:-
 random(1,5,RowAI),
 random(1,5,ColAI),
 board(Board),
 (checkMove(RowAI, ColAI, Board, 1, 0, 0)-> 
-board2(Board2), putMove(RowAI, ColAI, Board, Board2, 1), set_board(Board2); 
+board2(Board2), putMove(RowAI, ColAI, Board, Board2, 1), set_board(Board2),clearScreen, printBoard, sleep(3); 
 (easyAiMove); true).
 
-/*
-% Hard --------------
 hardAiMove:- 
-    
-*/
+    checkBestMove(Row, Col, 1, Min),
+    board(Board),
+    board2(Board2),
+    putMove(Row, Col, Board, Board2, 1),
+    set_board(Board2),
+    clearScreen, printBoard,
+    sleep(3).
+
+checkBestMove(Row, Col, I, Min):-
+    (I =:= 5 -> checkBestMoveRow(Col, I, 1, Min), Row = 5;
+    checkBestMove(Row1, Col1, I + 1, Min1),
+    checkBestMoveRow(Col2, I, 1, Min2),
+    (Min1 > Min2 -> Min = Min2, Row = I, Col = Col2; Min = Min1, Col = Col1, Row = Row1)
+    ).
+
+checkBestMoveRow(Col, I, J, Min):-
+    board(Board),
+    (\+checkMove(I, J, Board, 1, 0, 0) -> (J =:= 5 -> Min = 26; checkBestMoveRow(Col, I, J + 1, Min));
+    J =:= 5 -> countOpts(I, J, Min), Col = 5;
+    checkBestMoveRow(Col1, I, J + 1, Min1),
+    countOpts(I, J, Min2),
+    (Min1 > Min2 -> Min = Min2, Col = J; Min = Min1, Col = Col1)
+    ).
+
+countOpts(Col, Row, N):-
+    board(Board),
+    board2(Board2),
+    putMove(Row, Col, Board, Board2, 1),
+    countMoves(Board, 1, N).
+
+countMoves([], I, N):- N is 0.
+
+countMoves([H|T], I, N):-
+    countTryRow(H, I, 1, N1),
+    countMoves(T, I + 1, N2),
+    N is N1 + N2.
+
+countTryRow([], I, J, N):- N is 0.
+
+countTryRow([H|T], I, J, N):-
+    board(Board),
+    (checkMove(I, J, Board, 1, 0, 0) -> N2 is 1; N2 is 0),
+    countTryRow(T, I, J + 1, N1),
+    N = N1 + N2.
+
+
+% Input and Interface ------------------------------------------------------------------------------------------
+
+printBoard:- board(Board), maplist(writeBoardLine, Board), nl.
+
+writeBoardLine(L):- maplist(writeBoardChar, L), nl, nl.
+
+writeBoardChar(C):- (C =:= 0 -> writeq(' W '); C =:= 1 -> writeq(' B '); writeq(' R ')).
+
+writeLine(L):- writeq(L), nl.
+
+clearScreen:- repeatNl(1).
+
+repeatNl(0).
+repeatNl(N):- N>0 ,nl, S is N-1, repeatNl(S).
+
+playerInput:-
+    writeLine('Please input your next tile'), 
+    getCoord(MoveRow, 'Row:'),
+    getCoord(MoveCol, 'Column:'),
+    makeMove(MoveRow, MoveCol).
+
+printWin:-
+writeq('The game is over. Player '), 
+color(Color),
+(Color =:= 1 -> writeq('Blue'); writeq('Red')),
+writeq(' wins!'), nl,
+sleep(1.5),nl.

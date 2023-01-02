@@ -8,15 +8,6 @@ Hadron is a combinatorial game for two players. It is played on an initially emp
 The last player to make a placement wins.
 If you don't have a placement available on your turn, you lose.
 
-
-## **Set Up**
-
-Set the game board between both players.
-Place the elephants in the center of each player’s back row.
-Place the mice in front of the elephants. 
-Place the lions to the sides of the mice.
-
-
 ## **Rules**
 
 You can place a tile in isolation, not adjacent to anything.

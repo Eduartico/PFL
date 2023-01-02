@@ -1,40 +1,64 @@
 :- use_module(library(lists)).
-:- dynamic board/1, color/1.
-startGame:- 
+:- use_module(library(random)).
+:- dynamic board/1, color/1, difficulty/1.
+play:- 
     writeLine('Select Game Mode:'), writeLine('1: Player vs Player'), writeLine('2: Player vs PC'), writeLine('3: PC vs PC'),
     read(GameMode),
-    (\+(integer(GameMode)) -> clearScreen, writeLine('Invalid Input!'), startGame;
+    (\+(integer(GameMode)) -> clearScreen, writeLine('Invalid Input!'), play;
     GameMode =:= 1 -> startPVP;
     GameMode =:= 2 -> startPVA;
     GameMode =:= 3 -> startAVA;
-    clearScreen, writeLine('Invalid Input!'), startGame).
+    clearScreen, writeLine('Invalid Input!'), play).
 
 % Player vs PC ---------------------------------------------
 startPVA:-
     writeLine('Select Difficulty:'), nl, writeq('Easy or Hard'), nl,
-    read(Difficulty),
-    writeLine('Let the games begin kekw'), nl,
+    read(Difdummy),
+    ((Difdummy = 'Easy' ; Difdummy = 'easy' ; Difdummy = 'E' ; Difdummy = 'e')-> set_difficulty(1);
+    (Difdummy = 'Hard' ; Difdummy = 'hard' ; Difdummy = 'H' ; Difdummy = 'h')-> set_difficulty(2);
+    writeLine('Invalid Input!'), startPVA),
+    writeLine('The game is about to start!'), nl,
     gameSetup,
-%//game loop deve iniciar aqui
-    gameLoop.
+    gameLoopPVA.
 
-gameLoop:-
+gameLoopPVA:-
     (checkWin -> fail;
-    playerInput, clearScreen, printBoard, changeColor, gameLoop
+    playerInput, clearScreen, printBoard, changeColor, 
+    aiMove, clearScreen, printBoard, writeLine('Your opponent made a move!'), Sleep(2), /*Check Win*/ changeColor, gameLoopPVA
     ).
-
-changeColor:-
-    color(Color),
-    (Color =:= 1 -> set_color(2); set_color(1)).
     
 % Player vs Player ---------------------------------------------
 
-%//game loop deve iniciar aqui
+startPVP:-
+    writeLine('The game is about to start!'), nl,
+    gameSetup,
+    gameLoopPVP.
+
+gameLoopPVP:-
+    (checkWin -> fail;
+    playerInput, clearScreen, printBoard, changeColor, gameLoopPVP
+    ).
 
 
 % PC vs PC ---------------------------------------------
 
+
+
+
+
+
+
+
+
+
+
+
+
 % Support functions ---------------------------------------------
+
+changeColor:-
+    color(Color),
+    (Color =:= 1 -> set_color(2); set_color(1)).
 
 printBoard:- board(Board), maplist(writeBoardLine, Board).
 
@@ -44,7 +68,7 @@ writeBoardChar(C):- (C =:= 0 -> writeq('W'); C =:= 1 -> writeq('B'); writeq('R')
 
 writeLine(L):- writeq(L), nl.
 
-clearScreen:- repeatNl(60).
+clearScreen:- repeatNl(1).
 
 repeatNl(0).
 repeatNl(N):- N>0 ,nl, S is N-1, repeatNl(S).
@@ -55,8 +79,11 @@ set_board(Value):-
 set_color(Value):-
     retractall(color(_)), asserta(color(Value)).
 
+set_difficulty(Value):-
+    retractall(difficulty(_)), asserta(difficulty(Value)).
+
 gameSetup:-
-    Line = [2, 0, 1, 1, 1],
+    Line = [0, 0, 0, 0, 0],
     Board = [Line, Line, Line, Line, Line],
     set_board(Board),
     printBoard,
@@ -80,7 +107,7 @@ getCoord(Coord, Message):- writeLine(Message), read(Coord1),
 
 /*validMove(MoveRow, MoveCol):-
     (MoveRow > 5 -> writeLine('Invalid Move!'); % todo condição
-    nth1(MoveRow, Board, X), nth1(Move, Board, X), startGame).*/
+    nth1(MoveRow, Board, X), nth1(Move, Board, X), play).*/
 
 makeMove(Row, Col):-
     board(Board),
@@ -165,3 +192,22 @@ tryRow([H|T], I, J):-
     board(Board),
     \+checkMove(I, J, Board, 1, 0, 0),
     tryRow(T, I, J + 1).
+
+aiMove:-
+difficulty(Difficulty),
+(Difficulty =:= 1 -> easyAiMove;
+hardAiMove).
+% Easy --------------
+easyAiMove:-
+random(1,5,RowAI),
+random(1,5,ColAI),
+board(Board),
+(checkMove(RowAI, ColAI, Board, 1, 0, 0)-> 
+board2(Board2), putMove(RowAI, ColAI, Board, Board2, 1), set_board(Board2); 
+(easyAiMove); true).
+
+/*
+% Hard --------------
+hardAiMove:- 
+    
+*/

@@ -3,7 +3,8 @@
 startGame:- 
     writeLine('Select Game Mode:'), writeLine('1: Player vs Player'), writeLine('2: Player vs PC'), writeLine('3: PC vs PC'),
     read(GameMode),
-    (GameMode =:= 1 -> startPVP;
+    (\+(integer(GameMode)) -> clearScreen, writeLine('Invalid Input!'), startGame;
+    GameMode =:= 1 -> startPVP;
     GameMode =:= 2 -> startPVA;
     GameMode =:= 3 -> startAVA;
     clearScreen, writeLine('Invalid Input!'), startGame).
@@ -15,8 +16,16 @@ startPVA:-
     writeLine('Let the games begin kekw'), nl,
     gameSetup,
 %//game loop deve iniciar aqui
-    playerInput.
+    gameLoop.
 
+gameLoop:-
+    (checkWin -> fail;
+    playerInput, clearScreen, printBoard, changeColor, gameLoop
+    ).
+
+changeColor:-
+    color(Color),
+    (Color =:= 1 -> set_color(2); set_color(1)).
     
 % Player vs Player ---------------------------------------------
 
@@ -27,7 +36,11 @@ startPVA:-
 
 % Support functions ---------------------------------------------
 
-printBoard:- board(Board), maplist(writeLine, Board).
+printBoard:- board(Board), maplist(writeBoardLine, Board).
+
+writeBoardLine(L):- maplist(writeBoardChar, L), nl.
+
+writeBoardChar(C):- (C =:= 0 -> writeq('W'); C =:= 1 -> writeq('B'); writeq('R')).
 
 writeLine(L):- writeq(L), nl.
 
@@ -43,11 +56,11 @@ set_color(Value):-
     retractall(color(_)), asserta(color(Value)).
 
 gameSetup:-
-    Line = ['W','W','W','W','W'],
+    Line = [2, 0, 1, 1, 1],
     Board = [Line, Line, Line, Line, Line],
     set_board(Board),
     printBoard,
-    set_color('B').
+    set_color(1).
 loopRefresh:-
     (color =:= 'B' -> color = 'R';
     color = 'B'),
@@ -71,47 +84,84 @@ getCoord(Coord, Message):- writeLine(Message), read(Coord1),
 
 makeMove(Row, Col):-
     board(Board),
-    B is 0, R is 0,
-    iterateMove(Row, Col, Board, 1, B, R),
-    (B =:= R -> set_board(Board); (writeLine('Invalid Move!'), playerInput) ; true),
-    printBoard.
+    (checkMove(Row, Col, Board, 1, 0, 0)-> 
+        board2(Board2), putMove(Row, Col, Board, Board2, 1), set_board(Board2); 
+        (writeLine('Invalid Move!'), playerInput) ; true).
 
-iterateMove(Row, Col, [], I, B, R).
+board2(Board2):-
+    Board2 = [A, B, C, D, E].
 
-iterateMove(Row, Col, [H|T], I, B, R):-
-    writeq(I), writeq('-'), writeq(Row), nl,
-    ((I =:= Row + 1; I =:= Row - 1) -> checkRow(Col, H, 1, B, R);
-    Row =:= I -> iterateRow(Col, H, 1, B, R); writeq('.'), nl) ; true,
+checkMove(Row, Col, [], I, B, R):- R =:= B.
+
+checkMove(Row, Col, [H|T], I, B, R):-
     I1 is I+1,
-    iterateMove(Row, Col, T, I1, B, R).
+    ((Row =:= I + 1 ; Row =:= I - 1) -> (
+        checkRow(Col, H, 1, 1) -> B1 is B + 1, checkMove(Row, Col, T, I1, B1, R);
+        checkRow(Col, H, 1, 2) -> R1 is R + 1, checkMove(Row, Col, T, I1, B, R1);
+        checkMove(Row, Col, T, I1, B, R)
+    );
+    Row =:= I -> (
+        (checkRow(Col, H, 1, 1) ; checkRow(Col, H, 1, 2)) -> fail;
+        (checkRow(Col - 1, H, 1, 1), checkRow(Col + 1, H, 1, 1)) -> B1 is B + 2, checkMove(Row, Col, T, I1, B1, R); 
+        (checkRow(Col - 1, H, 1, 2), checkRow(Col + 1, H, 1, 2)) -> R1 is R + 2, checkMove(Row, Col, T, I1, B, R1);
+        checkRow(Col - 1, H, 1, 1) -> (
+            B1 is B + 1,
+            (checkRow(Col + 1, H, 1, 2) -> 
+                R1 is R + 1, checkMove(Row, Col, T, I1, B1, R1); 
+                checkMove(Row, Col, T, I1, B1, R)
+            )
+        );
+        checkRow(Col - 1, H, 1, 2) -> (
+            R1 is R + 1,
+            (checkRow(Col + 1, H, 1, 1) -> 
+                B1 is B + 1, checkMove(Row, Col, T, I1, B1, R1); 
+                checkMove(Row, Col, T, I1, B, R1)
+            )
+        );
+        checkRow(Col + 1, H, 1, 1) -> B1 is B + 1, checkMove(Row, Col, T, I1, B1, R);
+        checkRow(Col + 1, H, 1, 2) -> R1 is R + 1, checkMove(Row, Col, T, I1, B, R1);
+        checkMove(Row, Col, T, I1, B, R)
+    );
+    checkMove(Row, Col, T, I1, B, R)
+).
 
-iterateRow(Col, [], J, B, R).
+putMove(Row, Col, [], [], I).
 
-iterateRow(Col, [H, T], J, B, R):-
-    ((J =:= Col + 1; J =:= Col - 1) -> (H =:= 'R' -> R1 is R+1, R = R1; H =:= 'B' -> B1 is B+1, B = B1; true);
-    J =:= Col -> color(Color), H = Color; true),
-    J1 is J+1,
-    iterateRow(Col, T, J1, B, R).
+putMove(Row, Col, [H1|T1], [H2|T2], I):-
+    I1 is I + 1,
+    (Row =\= I -> H2 = H1, putMove(Row, Col, T1, T2, I1);
+    board2(H2), putMoveRow(Col, H1, H2, 1), putMove(Row, Col, T1, T2, I1)
+    ).
+    
+putMoveRow(Col, [], [], J).
 
-checkRow(Col, [], J, B, R).
+putMoveRow(Col, [H1|T1], [H2|T2], J):-
+    J1 is J + 1,
+    (Col =\= J -> H2 = H1, putMoveRow(Col, T1, T2, J1);
+    color(Color), H2 = Color, putMoveRow(Col, T1, T2, J1)
+    ).
 
-checkRow(Col, [H, T], J, B, R):-
-    (J =:= Col -> (H =:= 'R' -> R1 = R+1, R = R1; H =:= 'B' -> B1 = B+1, B = B1; true);
-    J1 = J+1,
-    checkRow(Col, T, J1, B, R)).
+checkRow(Col, [], J, Color).
 
+checkRow(Col, [H|T], J, Color):-
+    ((Col =:= 0 ; Col =:= 6) -> fail;
+    (J =:= Col) -> H =:= Color;
+    J1 is J + 1, 
+    checkRow(Col, T, J1, Color)).
 
-/*
-checkWin:-
-Btotal = 0, Rtotal = 0,
-iterateMoveRec(ColT, RowT, 1, B, R),
-Btotal 
+checkWin:- 
+    board(Board),
+    tryMoves(Board, 1).
 
-somaRec(0, 0).                   
-somaRec(N, F):- N > 0,
-N1 is N-1,
-somaRec(N1, F1), 
-F is F1 + N.
+tryMoves([], I).
 
-(CT =:= 5; RT =:= 5 -> 
-Color = 'B').*/
+tryMoves([H|T], I):-
+    tryRow(H, I, 1),
+    tryMoves(T, I + 1).
+
+tryRow([], I, J).
+
+tryRow([H|T], I, J):-
+    board(Board),
+    \+checkMove(I, J, Board, 1, 0, 0),
+    tryRow(T, I, J + 1).

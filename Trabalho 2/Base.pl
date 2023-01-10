@@ -7,6 +7,7 @@
 play:- 
     writeLine('Select Game Mode:'), writeLine('1: Player vs Player'), writeLine('2: Player vs PC'), writeLine('3: PC vs PC'),
     read(GameMode),
+    set_difficulty(1),
     (\+(integer(GameMode)) -> clearScreen, writeLine('Invalid Input!'), play;
     GameMode =:= 1 -> startPVP;
     GameMode =:= 2 -> startPVA;
@@ -85,7 +86,6 @@ gameSetup:-
     Board = [Line, Line, Line, Line, Line],
     set_board(Board),
     printBoard,
-    set_difficulty(1),
     set_color(1).
 
 getCoord(Coord, Message):- writeLine(Message), read(Coord1), 

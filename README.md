@@ -1,5 +1,4 @@
 # Programação Funcional e em Lógica
-* Project name: Urban Logistics for Delivery of Goods
 * Short description: Repository containing the code developed in practical PFL classes and both pratical projects
 * Tools: Haskell / Prolog
 * Institution: FEUP
